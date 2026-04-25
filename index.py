@@ -46,19 +46,22 @@ PACKAGE_CONFIG = {
     },
     "pc-client": {
         "free": {
-            "auto_use": {"device_count": 1, "device_time": 20},
+            "auto_use": {"device_count": 1, "daily_count": 3, "device_time": 20},
+            "create": {"daily_limit": 5},
             "pdf": {"daily_limit": 10},
             "cover": {"daily_limit": 5},
             "transfer": {"daily_limit": 10}
         },
         "basic": {
-            "auto_use": {"device_count": 3, "device_time": 60},
+            "auto_use": {"device_count": 3, "daily_count": 9, "device_time": 60},
+            "create": {"daily_limit": 15},
             "pdf": {"daily_limit": 30},
             "cover": {"daily_limit": 30},
             "transfer": {"daily_limit": 30}
         },
         "premium": {
-            "auto_use": {"device_count": -1, "device_time": -1},
+            "auto_use": {"device_count": -1, "daily_count": -1, "device_time": -1},
+            "create": {"daily_limit": -1},
             "pdf": {"daily_limit": -1},
             "cover": {"daily_limit": -1},
             "transfer": {"daily_limit": -1}
@@ -152,19 +155,22 @@ def init_db():
             },
             "pc-client": {
                 "free": {
-                    "auto_use": {"device_count": 1, "device_time": 20},
+                    "auto_use": {"device_count": 1, "daily_count": 3, "device_time": 20},
+                    "create": {"daily_limit": 5},
                     "pdf": {"daily_limit": 10},
                     "cover": {"daily_limit": 5},
                     "transfer": {"daily_limit": 10}
                 },
                 "basic": {
-                    "auto_use": {"device_count": 3, "device_time": 60},
+                    "auto_use": {"device_count": 3, "daily_count": 9, "device_time": 60},
+                    "create": {"daily_limit": 15},
                     "pdf": {"daily_limit": 30},
                     "cover": {"daily_limit": 30},
                     "transfer": {"daily_limit": 30}
                 },
                 "premium": {
-                    "auto_use": {"device_count": -1, "device_time": -1},
+                    "auto_use": {"device_count": -1, "daily_count": -1, "device_time": -1},
+                    "create": {"daily_limit": -1},
                     "pdf": {"daily_limit": -1},
                     "cover": {"daily_limit": -1},
                     "transfer": {"daily_limit": -1}
@@ -1016,21 +1022,24 @@ def handle_device_info(body):
                 elif ct == "pc-client":
                     if package_type == "free":
                         permissions = {
-                            "auto_use": {"device_count": 1, "device_time": 20},
+                            "auto_use": {"device_count": 1, "daily_count": 3, "device_time": 20},
+                            "create": {"daily_limit": 5},
                             "pdf": {"daily_limit": 10},
                             "cover": {"daily_limit": 5},
                             "transfer": {"daily_limit": 10}
                         }
                     elif package_type == "basic":
                         permissions = {
-                            "auto_use": {"device_count": 3, "device_time": 60},
+                            "auto_use": {"device_count": 3, "daily_count": 9, "device_time": 60},
+                            "create": {"daily_limit": 15},
                             "pdf": {"daily_limit": 30},
                             "cover": {"daily_limit": 30},
                             "transfer": {"daily_limit": 30}
                         }
                     elif package_type == "premium":
                         permissions = {
-                            "auto_use": {"device_count": -1, "device_time": -1},
+                            "auto_use": {"device_count": -1, "daily_count": -1, "device_time": -1},
+                            "create": {"daily_limit": -1},
                             "pdf": {"daily_limit": -1},
                             "cover": {"daily_limit": -1},
                             "transfer": {"daily_limit": -1}
