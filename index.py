@@ -234,10 +234,12 @@ def delete_activation_code(auth_code):
     conn.close()
     return affected > 0
 
-def list_activation_codes(offset=0, limit=20, status=None, client_type=None):
+def list_activation_codes(page=1, page_size=20, status=None, client_type=None, package_type=None):
     init_db()
     conn = get_db_connection()
     cursor = conn.cursor()
+    
+    offset = (page - 1) * page_size
     
     # 构建查询条件
     conditions = []
@@ -255,17 +257,43 @@ def list_activation_codes(offset=0, limit=20, status=None, client_type=None):
         conditions.append("client_type = ?")
         params.append(client_type)
     
+    if package_type:
+        conditions.append("package_type = ?")
+        params.append(package_type)
+    
     if len(conditions) > 0:
         where_clause = " WHERE " + " AND ".join(conditions)
     else:
         where_clause = ""
     
     sql = f"SELECT * FROM activation_codes {where_clause} ORDER BY generate_date DESC LIMIT ? OFFSET ?"
-    params.extend([limit, offset])
+    params.extend([page_size, offset])
     
     cursor.execute(sql, params)
     rows = cursor.fetchall()
-    result = [dict(row) for row in rows]
+    result = []
+    for row in rows:
+        item = dict(row)
+        # 计算状态
+        if not item.get("machine_code"):
+            item["status"] = "unused"
+        else:
+            # 检查是否过期
+            if item.get("expiry_date") and item["expiry_date"] != "9999-12-31T23:59:59":
+                try:
+                    expiry_str = item["expiry_date"]
+                    if expiry_str.endswith('Z'):
+                        expiry_str = expiry_str[:-1]
+                    expiry = datetime.fromisoformat(expiry_str)
+                    if datetime.utcnow() > expiry:
+                        item["status"] = "expired"
+                    else:
+                        item["status"] = "used"
+                except Exception:
+                    item["status"] = "used"
+            else:
+                item["status"] = "used"
+        result.append(item)
     
     # 统计总数
     count_sql = "SELECT COUNT(*) FROM activation_codes" + where_clause
@@ -275,9 +303,9 @@ def list_activation_codes(offset=0, limit=20, status=None, client_type=None):
     conn.close()
     return {
         "total": total,
-        "offset": offset,
-        "limit": limit,
-        "list": result
+        "page": page,
+        "page_size": page_size,
+        "items": result
     }
 
 # -------------------------- 权限配置管理 --------------------------
@@ -640,6 +668,7 @@ def handle_generate(body):
         "data": {
             "auth_codes": auth_codes,
             "duration": duration,
+            "package_type": package_type,
             "client_type": client_type,
             "generate_date": generate_date
         }
@@ -647,13 +676,14 @@ def handle_generate(body):
 
 def handle_list(body):
     """列出激活码（管理接口）"""
-    offset = body.get("offset", 0)
-    limit = body.get("limit", 20)
+    page = body.get("page", 1)
+    page_size = body.get("page_size", 20)
     status = body.get("status")  # activated / unused / expired
     client_type = body.get("client_type")  # 按客户端类型筛选
+    package_type = body.get("package_type")  # 按套餐类型筛选
     
     try:
-        result = list_activation_codes(offset, limit, status, client_type)
+        result = list_activation_codes(page, page_size, status, client_type, package_type)
         return {
             "status": "success",
             "message": "获取列表成功",
@@ -675,7 +705,9 @@ def handle_delete(body):
         return {
             "status": "error",
             "message": "缺少必填参数 auth_code",
-            "data": None
+            "data": {
+                "deleted": False
+            }
         }
     
     try:
@@ -686,20 +718,26 @@ def handle_delete(body):
             return {
                 "status": "success",
                 "message": f"激活码 {auth_code} 删除成功",
-                "data": None
+                "data": {
+                    "deleted": True
+                }
             }
         else:
             return {
                 "status": "error",
                 "message": "激活码不存在",
-                "data": None
+                "data": {
+                    "deleted": False
+                }
             }
     except Exception as e:
         traceback.print_exc()
         return {
             "status": "error",
             "message": f"删除失败: {str(e)}",
-            "data": None
+            "data": {
+                "deleted": False
+            }
         }
 
 def handle_auth_info(body):
@@ -723,6 +761,26 @@ def handle_auth_info(body):
                 "message": "激活码不存在",
                 "data": None
             }
+        
+        # 计算状态
+        if not info.get("machine_code"):
+            info["status"] = "unused"
+        else:
+            # 检查是否过期
+            if info.get("expiry_date") and info["expiry_date"] != "9999-12-31T23:59:59":
+                try:
+                    expiry_str = info["expiry_date"]
+                    if expiry_str.endswith('Z'):
+                        expiry_str = expiry_str[:-1]
+                    expiry = datetime.fromisoformat(expiry_str)
+                    if datetime.utcnow() > expiry:
+                        info["status"] = "expired"
+                    else:
+                        info["status"] = "used"
+                except Exception:
+                    info["status"] = "used"
+            else:
+                info["status"] = "used"
         
         return {
             "status": "success",
