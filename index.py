@@ -870,10 +870,10 @@ def handle_device_info(body):
     client_type = body.get("client_type")
     plugin_version = body.get("plugin_version")
     
-    if not machine_code or not client_type or not plugin_version:
+    if not machine_code or not client_type:
         return {
             "status": "error",
-            "message": "缺少必填参数 machine_code / client_type / plugin_version",
+            "message": "缺少必填参数 machine_code / client_type",
             "data": None
         }
     
