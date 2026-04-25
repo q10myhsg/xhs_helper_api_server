@@ -1,9 +1,0 @@
-[submodule "xhs_helper_pc_server"]
-	path = xhs_helper_pc_server
-	url = https://github.com/q10myhsg/xhs_helper_pc_server.git
-[submodule "xhs_helper_api_server"]
-	path = xhs_helper_api_server
-	url = https://github.com/q10myhsg/xhs_helper_api_server.git
-[submodule "activation-admin"]
-	path = activation-admin
-	url = https://github.com/q10myhsg/activation-admin.git
