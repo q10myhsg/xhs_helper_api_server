@@ -895,12 +895,30 @@ def handle_device_info(body):
         conn.close()
         
         if len(rows) == 0:
-            # 设备未记录
+            # 设备未记录，返回默认免费版权限
+            default_permissions = {
+                "prompt_word": {
+                    "daily_limit": 10,
+                    "enable_like_filter": True
+                },
+                "download": {
+                    "daily_limit": 10
+                },
+                "search": {
+                    "high_value_notes": {
+                        "daily_limit": 10
+                    },
+                    "keyword_expansion": {
+                        "daily_limit": 2
+                    }
+                }
+            }
             return {
                 "status": "success",
                 "message": "查询成功",
                 "data": {
                     "machine_code": machine_code,
+                    "client_type": client_type,
                     "is_active": False,
                     "auth_code": None,
                     "package_type": None,
@@ -910,7 +928,8 @@ def handle_device_info(body):
                     "days_remaining": 0,
                     "first_activation": True,
                     "last_verify_time": None,
-                    "created_at": None
+                    "created_at": None,
+                    "permissions": default_permissions
                 }
             }
         
@@ -966,24 +985,26 @@ def handle_device_info(body):
         
         first_activation = info.get("activated_date") is None or info.get("last_verify_time") is None
         
-        # 默认权限（未激活）
-        permissions = {
+        # 默认权限（浏览器插件免费版）
+        default_browser_extension_permissions = {
             "prompt_word": {
-                "daily_limit": 20,
+                "daily_limit": 10,
                 "enable_like_filter": True
             },
             "download": {
-                "daily_limit": 20
+                "daily_limit": 10
             },
             "search": {
                 "high_value_notes": {
-                    "daily_limit": 30
+                    "daily_limit": 10
                 },
                 "keyword_expansion": {
-                    "daily_limit": 10
+                    "daily_limit": 2
                 }
             }
         }
+        
+        permissions = default_browser_extension_permissions
         
         if is_active and not expired and info:
             # 已激活，根据 client_type + package_type 从数据库获取权限
@@ -997,9 +1018,9 @@ def handle_device_info(body):
                 if ct == "browser-extension":
                     if package_type == "free":
                         permissions = {
-                            "prompt_word": {"daily_limit": 20, "enable_like_filter": True},
-                            "download": {"daily_limit": 20},
-                            "search": {"high_value_notes": {"daily_limit": 30}, "keyword_expansion": {"daily_limit": 10}}
+                            "prompt_word": {"daily_limit": 10, "enable_like_filter": True},
+                            "download": {"daily_limit": 10},
+                            "search": {"high_value_notes": {"daily_limit": 10}, "keyword_expansion": {"daily_limit": 2}}
                         }
                     elif package_type == "basic":
                         permissions = {
@@ -1018,7 +1039,6 @@ def handle_device_info(body):
                         permissions = {
                             "auto_use": {"device_count": 1, "daily_count": 3, "device_time": 20},
                             "create": {"daily_limit": 5},
-                            "pdf": {"daily_limit": 10},
                             "cover": {"daily_limit": 5},
                             "transfer": {"daily_limit": 10}
                         }
@@ -1026,7 +1046,6 @@ def handle_device_info(body):
                         permissions = {
                             "auto_use": {"device_count": 3, "daily_count": 9, "device_time": 60},
                             "create": {"daily_limit": 15},
-                            "pdf": {"daily_limit": 30},
                             "cover": {"daily_limit": 30},
                             "transfer": {"daily_limit": 30}
                         }
@@ -1034,7 +1053,6 @@ def handle_device_info(body):
                         permissions = {
                             "auto_use": {"device_count": -1, "daily_count": -1, "device_time": -1},
                             "create": {"daily_limit": -1},
-                            "pdf": {"daily_limit": -1},
                             "cover": {"daily_limit": -1},
                             "transfer": {"daily_limit": -1}
                         }
